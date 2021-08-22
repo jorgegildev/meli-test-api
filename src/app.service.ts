@@ -1,4 +1,4 @@
-import { HttpService, Injectable } from '@nestjs/common';
+import { HttpService, HttpStatus, Injectable } from '@nestjs/common';
 
 @Injectable()
 export class AppService {
@@ -13,7 +13,7 @@ export class AppService {
     this.authorLastName = 'Gil Roa';
   }
 
-  private getDecimals(price): number {
+  private static getDecimals(price): number {
     let decimals: any = 0;
     if (price.toString().indexOf('.') !== (-1)) {
       decimals = price.toString();
@@ -22,19 +22,58 @@ export class AppService {
     return decimals;
   }
 
-  async searchItems(q: string): Promise<any> {
+  /**
+   * Return four products
+   * @param keyword word to search
+   */
+  async searchItems(keyword: string): Promise<any> {
 
     // get all items
-    const result = await this.http.get(`${this.baseUrl}/sites/MLA/search?q=${q}`,{}).toPromise().then( async result => {
-      return result.data;
+    const result = await this.http.get(`${this.baseUrl}/sites/MLA/search?q=${keyword}`,{}).toPromise().then( async res => {
+      return res.data;
     });
 
-    const categories: [] = result.available_filters.find(categroy => categroy.id === 'category').values;
+    if(!result.results.length) {
+      return {statusCode: HttpStatus.OK, data:{
+          author: {
+            name: this.authorName,
+            lastname: this.authorLastName
+          },
+          categories: [],
+          data: [],
+        }};
+    }
+
+    let categories: any;
+    if(result.available_filters.length) {
+      categories = result.available_filters.find(category => category.id === 'category');
+    }
+    if(result.filters.length) {
+      categories = result.filters.find(category => category.id === 'category');
+    }
+
+    let totalCategories = [];
+    if (categories.values.length) {
+      if(categories.values[0].path_from_root && categories.values[0].path_from_root.length){
+        for (const cat of categories.values[0].path_from_root) {
+          totalCategories.push(cat.name);
+        }
+      } else {
+        let cont = 0;
+        for (const cat of categories.values) {
+          if (cat.results > cont) {
+            cont = cat.results;
+          }
+        }
+        totalCategories = categories.values.find(cat => cat.results === cont).name;
+      }
+    }
+
 
     const items = result.results.map((item, index) => {
 
       if (index < 4) {
-        const decimals: number = this.getDecimals(item.price);
+        const decimals: number = AppService.getDecimals(item.price);
 
         return {
           id: item.id,
@@ -56,54 +95,82 @@ export class AppService {
     });
 
     // return response
-    return {
-      author: {
-        name: this.authorName,
-        lastname: this.authorLastName
-      },
-      categories,
-      data: items,
-    };
+    return {statusCode: HttpStatus.OK, data:{
+        author: {
+          name: this.authorName,
+          lastname: this.authorLastName
+        },
+        categories: totalCategories,
+        data: items,
+      }};
   }
 
+  /**
+   * return a specific detail product
+   * @param idItem id of product
+   */
   async detailItem(idItem: string): Promise<any> {
 
-    // get detail item
-    let item = await this.http.get(`${this.baseUrl}/items/${idItem}`,{}).toPromise().then( async result => {
-      return result.data;
-    });
+    try {
+      // get detail item
+      let item = await this.http.get(`${this.baseUrl}/items/${idItem}`,{}).toPromise().then( async res => {
+        return res.data;
+      });
 
-    // get description item
-    const resultDescription = await this.http.get(`${this.baseUrl}/items/${idItem}/description`,{}).toPromise().then( async result => {
-      return result.data;
-    });
+      // get description item
+      const resultDescription = await this.http.get(`${this.baseUrl}/items/${idItem}/description`,{}).toPromise().then( async res => {
+        return res.data;
+      });
 
-    const decimals: number = this.getDecimals(item.price);
 
-    item = {
-      id: item.id,
-      title: item.title,
-      price: {
-        currency: item.currency_id,
-        amount: item.price,
-        decimals
-      },
-      picture: item.pictures[0].url,
-      condition: item.condition,
-      // eslint-disable-next-line @typescript-eslint/camelcase
-      free_shipping: item.shipping.free_shipping,
-      // eslint-disable-next-line @typescript-eslint/camelcase
-      sold_quantity: item.sold_quantity,
-      description: resultDescription.plain_text,
+      if(item.status === HttpStatus.NOT_FOUND || resultDescription.status === HttpStatus.NOT_FOUND) {
+        return {statusCode: HttpStatus.NOT_FOUND, data:{
+            author: {
+              name: this.authorName,
+              lastname: this.authorLastName
+            },
+            item: null,
+            error: 'resource not found'
+          }};
+      }
+
+      const decimals: number = AppService.getDecimals(item.price);
+
+      item = {
+        id: item.id,
+        title: item.title,
+        price: {
+          currency: item.currency_id,
+          amount: item.price,
+          decimals
+        },
+        picture: item.pictures[0].url,
+        condition: item.condition,
+        // eslint-disable-next-line @typescript-eslint/camelcase
+        free_shipping: item.shipping.free_shipping,
+        // eslint-disable-next-line @typescript-eslint/camelcase
+        sold_quantity: item.sold_quantity,
+        description: resultDescription.plain_text,
+      }
+
+      return {statusCode: HttpStatus.NOT_FOUND, data:{
+          author: {
+            name: this.authorName,
+            lastname: this.authorLastName
+          },
+          item
+        }};
+    } catch (e) {
+      return {statusCode: HttpStatus.NOT_FOUND, data:{
+          author: {
+            name: this.authorName,
+            lastname: this.authorLastName
+          },
+          item: null,
+          error: e.response.data.error
+        }};
     }
 
-    return {
-      author: {
-        name: this.authorName,
-        lastname: this.authorLastName
-      },
-      item
-    }
   }
 
 }

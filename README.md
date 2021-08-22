@@ -4,7 +4,7 @@
 
 ## Description
 
-[Meli API](https://github.com/nestjs/nest) test app with repository.
+[Meli API](https://github.com/jorgegildev/meli-test-api) test app with repository.
 
 ## Installation
 

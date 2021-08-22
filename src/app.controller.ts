@@ -10,13 +10,13 @@ export class AppController {
   @Get()
   async searchItems(@Query() query, @Res() res): Promise<any> {
     this.result = await this.appService.searchItems(query.search);
-    return res.status(HttpStatus.OK).json(this.result);
+    return res.status(this.result.statusCode).json(this.result.data);
   }
 
   @Get('/:itemId')
   async detailItem(@Param('itemId') itemId: string, @Res() res): Promise<any> {
     this.result = await this.appService.detailItem(itemId);
-    return res.status(HttpStatus.OK).json(this.result);
+    return res.status(this.result.statusCode).json(this.result.data);
   }
 
 }
