@@ -52,11 +52,11 @@ export class AppService {
       categories = result.filters.find(category => category.id === 'category');
     }
 
-    let totalCategories = [];
+    let breadcrumbs = [];
     if (categories.values.length) {
       if(categories.values[0].path_from_root && categories.values[0].path_from_root.length){
         for (const cat of categories.values[0].path_from_root) {
-          totalCategories.push(cat.name);
+          breadcrumbs.push(cat.name);
         }
       } else {
         let cont = 0;
@@ -65,7 +65,7 @@ export class AppService {
             cont = cat.results;
           }
         }
-        totalCategories = categories.values.find(cat => cat.results === cont).name;
+        breadcrumbs = categories.values.find(cat => cat.results === cont).name;
       }
     }
 
@@ -100,7 +100,7 @@ export class AppService {
           name: this.authorName,
           lastname: this.authorLastName
         },
-        categories: totalCategories,
+        categories: breadcrumbs,
         data: items,
       }};
   }
