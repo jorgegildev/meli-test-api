@@ -17,6 +17,7 @@ $ npm install
 ```bash
 # development
 $ npm run start
+root url: http://localhost:3005/api
 
 # watch mode
 $ npm run start:dev
