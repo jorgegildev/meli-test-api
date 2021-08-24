@@ -40,7 +40,7 @@ export class AppService {
             lastname: this.authorLastName
           },
           categories: [],
-          data: [],
+          items: [],
         }};
     }
 
@@ -101,7 +101,7 @@ export class AppService {
           lastname: this.authorLastName
         },
         categories: breadcrumbs,
-        data: items,
+        items,
       }};
   }
 
@@ -153,7 +153,7 @@ export class AppService {
         description: resultDescription.plain_text,
       }
 
-      return {statusCode: HttpStatus.NOT_FOUND, data:{
+      return {statusCode: HttpStatus.OK, data:{
           author: {
             name: this.authorName,
             lastname: this.authorLastName

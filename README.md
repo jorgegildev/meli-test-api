@@ -40,7 +40,7 @@ $ npm run test:cov
 
 ## Support
 
-Meli Api is an MIT-licensed open source project.
+Meli Api is an GNU-licensed open source project.
 
 ## Stay in touch
 
